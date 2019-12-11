@@ -24,7 +24,7 @@ Vagrant.configure('2') do |config|
 
             subconfig.vm.provision 'ansible' do |ansible|
                 #ansible.verbose = 'vvvv'
-                ansible.playbook = 'playbook.yml'
+                ansible.playbook = "../clients_playbook.yml"
                 ansible.limit = 'all'
                 ansible.config_file = Dir.pwd + '/ansible.cfg'
                 ansible.host_vars = {
