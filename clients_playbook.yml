@@ -2,7 +2,7 @@
   hosts: all
   gather_facts: yes
   vars_files:
-    - ../vault_win.yml
+    - vault_win.yml
   vars:
     domain: example.com
     dc_ip: 174.35.241.202
