@@ -1,0 +1,69 @@
+- name: Instala o domain controller
+  hosts: all
+  vars_files:
+    - ../vault_win.yml
+  vars:
+    domain: example.com
+    safe_mode_password: '{{ vault_password }}'
+    admin_user: administrator
+    domain_admin_user: dcadmin
+  gather_facts: yes
+  tasks:
+  - name: Cria entrada {{ domain }} no hosts
+    win_hosts:
+      canonical_name: "{{ domain }}"
+      ip_address: "{{ ansible_host }}" 
+
+  - name: install ad
+    win_feature:
+      name: "{{ item }}"
+      include_management_tools: yes
+      include_sub_features: yes
+      state: present
+    loop:
+      - AD-Domain-Services
+      - DNS
+
+  - name: Definie a senha do administrador
+    win_user:
+      name: administrator
+      password: '{{ vault_password }}'
+      state: present
+
+  - name: Instala / configura o domínio
+    win_domain:
+      dns_domain_name: "{{ domain }}"
+      safe_mode_password: "{{ safe_mode_password }}"
+      create_dns_delegation: no
+    register: install_domain
+
+  - name: reboot
+    win_reboot:
+      msg: Installing AD. Rebooting...
+      pre_reboot_delay: 15
+    when: install_domain.changed
+
+  - name: Garante que o servidor é um domain controller
+    win_domain_controller:
+      dns_domain_name: "{{ domain }}"
+      domain_admin_user: "{{ admin_user }}@{{ domain }}"
+      domain_admin_password: "{{ safe_mode_password }}"
+      safe_mode_password: "{{ safe_mode_password }}"
+      state: domain_controller
+      log_path: C:\ansible_win_domain_controller.txt
+      read_only: no
+    register: ensure_domain_controller
+
+  - name: reboot
+    win_reboot:
+      msg: Installing AD. Rebooting...
+      pre_reboot_delay: 15
+    when: ensure_domain_controller.changed
+
+  - name: Cria / garante que o usuário {{ domain_admin_user }} seja domain admin
+    win_domain_user:
+      name: "{{ domain_admin_user }}"
+      password: "{{ safe_mode_password }}"
+      state: present
+      groups:
+        - Domain Admins

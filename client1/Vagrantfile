@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+vhosts =[
+  {:hostname => "client1", :image => "diodonfrost/windows-2k16", :ip1 => '174.35.241.211', :mask1 => '255.255.255.0', :ip2 => '174.35.240.211', :mask2 => '255.255.255.0', :ip3 => '174.35.239.211', :mask3 => '255.255.255.0', :cpus => '1', :mem => '3500' },
+]
+
+# Start
+Vagrant.configure('2') do |config|
+
+    vhosts.each do |vhost|
+        config.vm.define vhost[:hostname] do |subconfig|
+            subconfig.vm.network 'private_network', ip: vhost[:ip1], netmask: vhost[:mask1]
+            subconfig.vm.network 'private_network', ip: vhost[:ip2], netmask: vhost[:mask2]
+            subconfig.vm.network 'private_network', ip: vhost[:ip3], netmask: vhost[:mask3]
+            subconfig.vm.box = vhost[:image]
+            subconfig.vm.hostname = vhost[:hostname]
+            subconfig.vm.boot_timeout = 3600
+
+            # Provisioning
+            subconfig.vm.provision 'windows-sysprep' do |sysprep|
+            end
+
+            subconfig.vm.provision 'ansible' do |ansible|
+                #ansible.verbose = 'vvvv'
+                ansible.playbook = 'playbook.yml'
+                ansible.limit = 'all'
+                ansible.config_file = Dir.pwd + '/ansible.cfg'
+                ansible.host_vars = {
+                    vhost[:hostname] => {
+                        verify: "disable",
+                        ansible_user: "vagrant",
+                        ansible_password: "vagrant",
+                        ansible_connection: "winrm",
+                        ansible_host: vhost[:ip1],
+                        ansible_port: 5985,
+                        ansible_winrm_transport: "plaintext",
+                        ansible_winrm_scheme: "http",
+                        ansible_winrm_server_cert_validation: "ignore",
+                    }
+                }
+            end
+
+            subconfig.vm.provider 'virtualbox' do |v|
+                v.memory = vhost[:mem]
+                v.cpus = vhost[:cpus]
+                v.gui = false
+            end
+        end
+    end
+end
