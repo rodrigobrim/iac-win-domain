@@ -1,0 +1,12 @@
+127.0.0.1	localhost
+127.0.1.1	samsung-ssd
+174.35.241.10   terraform
+174.35.241.21   oracle1
+174.35.241.22   oracle2
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters

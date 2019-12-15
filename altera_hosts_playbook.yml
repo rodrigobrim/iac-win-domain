@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+
+  - lineinfile:
+      path: hosts
+      line: 10.0.0.1 my-server.my-domain.com
